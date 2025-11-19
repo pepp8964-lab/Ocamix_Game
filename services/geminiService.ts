@@ -62,8 +62,10 @@ export const evaluateDish = async (
     CRITICS TASTING: ${criticsDesc}.
     TOTAL INGREDIENTS COST: ${ingredientsCost} Gold.
 
-    **SAFETY RULES:**
-    If the user input contains explicit violence, hate speech, or strictly prohibited content that violates safety policies, you must NOT generate a recipe. Instead, return a JSON with the name "Я не буду це готувати" and description "Я не думаю, що це добра ідея відповідати на такий запит.". Score 0.
+    **STRICT SAFETY RULES:**
+    If the user input contains explicit violence, hate speech, or strictly prohibited content that violates safety policies, you must NOT generate a recipe. 
+    Instead, strictly return a JSON with the "name": "Я не буду це готувати" and "description": "Я не думаю, що це добра ідея відповідати на такий запит.". 
+    Score must be 0.
 
     **GAME RULES:**
     1. **Name & Desc**: Create a creative dish name and sensory description.
@@ -76,10 +78,10 @@ export const evaluateDish = async (
     4. **Scoring & Economy**: 
        - Score 0.0 to 10.0.
        - Raw/Burnt = Automatic < 3.0.
-       - The 'rewardGold' MUST be calculated based on the 'TOTAL INGREDIENTS COST'.
+       - The 'rewardGold' MUST be calculated based on the 'TOTAL INGREDIENTS COST' provided (${ingredientsCost}).
        - If the dish is GOOD (Score > 7), rewardGold should be approx 1.5x to 3x the cost.
-       - If the dish is BAD (Score < 4), rewardGold should be negative (penalty).
-       - Do NOT ignore the cost. A dish made of expensive items (Diamonds, Dragon Meat) should yield huge rewards if cooked well.
+       - If the dish is BAD (Score < 4), rewardGold should be negative (penalty) or zero.
+       - Do NOT ignore the cost. Cooking with Dragon Meat should yield Dragon-level rewards if successful.
 
     JSON Format:
     {
@@ -137,7 +139,7 @@ export const evaluateDish = async (
 
     const result = JSON.parse(response.text || "{}");
     
-    // Safety check fallback for empty or refused responses
+    // STRICT FALLBACK for safety or refusal
     if (result.name === "Я не буду це готувати" || !result.name) {
        return {
         name: "Відмова Шефа",
