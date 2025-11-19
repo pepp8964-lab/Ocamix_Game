@@ -1,8 +1,16 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Ingredient, DishResult, Critic, IngredientType } from "../types";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => {
+  let key = '';
+  try {
+    // Safe access to process.env to prevent crashes in environments where process is undefined
+    key = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+  } catch (e) {
+    console.error("Environment variable access error", e);
+  }
+  return new GoogleGenAI({ apiKey: key });
+};
 
 export const generateCritics = async (level: number): Promise<Critic[]> => {
   const prompt = `

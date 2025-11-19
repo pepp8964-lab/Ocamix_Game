@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LEVELS_XP, BASE_INGREDIENTS, ALL_ITEMS } from './constants';
 import { Ingredient, GameState, DishResult, PlayerProfile, Critic, CharacterAppearance, ItemRegistry } from './types';
@@ -6,6 +5,7 @@ import Kitchen from './components/Kitchen';
 import ResultsView from './components/ResultsView';
 import CharacterEditor from './components/CharacterEditor';
 import Shop from './components/Shop';
+import LoadingScreen from './components/LoadingScreen'; // Import Loading Screen
 import { evaluateDish, generateCritics } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -53,6 +53,13 @@ const App: React.FC = () => {
        setGameState(GameState.KITCHEN);
     } catch (e) {
        console.error(e);
+       // Fallback critics if AI fails
+       setRoundCritics([
+         { id: 'c1', name: 'Пан Василь', persona: 'Гурман з села', request: 'Борщ', avatar: '👨‍🌾' },
+         { id: 'c2', name: 'Леді Гага', persona: 'Ексцентрична зірка', request: 'Щось дивне', avatar: '👩‍🎤' },
+         { id: 'c3', name: 'Орк Гриша', persona: 'Любить м\'ясо', request: 'Смажене м\'ясо', avatar: '👹' },
+       ]);
+       setGameState(GameState.KITCHEN);
     } finally {
        setLoading(false);
     }
@@ -133,22 +140,18 @@ const App: React.FC = () => {
   // --- RENDER ---
 
   return (
-    <div className="min-h-screen bg-game-bg text-slate-100 font-sans selection:bg-game-primary selection:text-white overflow-hidden">
+    <div className="min-h-[100dvh] w-full bg-game-bg text-slate-100 font-sans selection:bg-game-primary selection:text-white overflow-hidden relative flex flex-col">
       
+      {/* Global Background Gradient (moved here to ensure it covers full app) */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_15%_50%,_rgba(124,58,237,0.15),_transparent_25%),_radial-gradient(circle_at_85%_30%,_rgba(217,70,239,0.15),_transparent_25%)]"></div>
+
       {/* GLOBAL LOADING OVERLAY */}
-      {loading && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center backdrop-blur-md">
-           <div className="w-20 h-20 border-4 border-game-primary border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(124,58,237,0.5)]"></div>
-           <div className="text-3xl font-display text-transparent bg-clip-text bg-gradient-to-r from-game-primary to-game-highlight animate-pulse">
-               ГЕНЕРАЦІЯ...
-           </div>
-        </div>
-      )}
+      {loading && <LoadingScreen />}
 
       {/* Menu Overlay (Main Screen) */}
       {gameState === GameState.MENU && (
-        <div className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
-           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 animate-pulse"></div>
+        <div className="flex-1 h-full flex flex-col items-center justify-center relative overflow-hidden z-10">
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 animate-pulse pointer-events-none"></div>
            
            <div className={`w-56 h-56 rounded-3xl border-4 border-white/10 flex flex-col items-center justify-center mb-10 shadow-[0_0_80px_rgba(124,58,237,0.3)] ${profile.appearance.bg} relative overflow-hidden transition-all duration-500 animate-float`}>
                <div className="absolute inset-0 opacity-30 bg-gradient-to-b from-white/20 to-transparent"></div>
@@ -187,35 +190,41 @@ const App: React.FC = () => {
       )}
 
       {gameState === GameState.SHOP && (
-        <Shop 
-            gold={profile.gold} 
-            inventory={profile.inventory}
-            registry={itemRegistry} 
-            onBuy={handleBuy} 
-            onBack={() => setGameState(GameState.MENU)} 
-        />
+        <div className="flex-1 h-full z-10">
+            <Shop 
+                gold={profile.gold} 
+                inventory={profile.inventory}
+                registry={itemRegistry} 
+                onBuy={handleBuy} 
+                onBack={() => setGameState(GameState.MENU)} 
+            />
+        </div>
       )}
 
       {gameState === GameState.CHARACTER && (
-        <CharacterEditor 
-           appearance={profile.appearance} 
-           onChange={updateAppearance} 
-           onBack={() => setGameState(GameState.MENU)} 
-        />
+        <div className="flex-1 h-full z-10">
+            <CharacterEditor 
+            appearance={profile.appearance} 
+            onChange={updateAppearance} 
+            onBack={() => setGameState(GameState.MENU)} 
+            />
+        </div>
       )}
       
       {gameState === GameState.KITCHEN && (
-        <Kitchen 
-          inventory={profile.inventory}
-          registry={itemRegistry}
-          critics={roundCritics}
-          waterLevel={profile.water}
-          onConsumeItem={handleConsumeItem}
-          onUseWater={(amt) => setProfile(p => ({...p, water: Math.max(0, p.water - amt)}))}
-          onRefillWater={() => setProfile(p => ({...p, water: 100}))}
-          onFinishDish={handleFinishDish}
-          onExit={() => setGameState(GameState.MENU)}
-        />
+        <div className="flex-1 h-full z-10">
+            <Kitchen 
+            inventory={profile.inventory}
+            registry={itemRegistry}
+            critics={roundCritics}
+            waterLevel={profile.water}
+            onConsumeItem={handleConsumeItem}
+            onUseWater={(amt) => setProfile(p => ({...p, water: Math.max(0, p.water - amt)}))}
+            onRefillWater={() => setProfile(p => ({...p, water: 100}))}
+            onFinishDish={handleFinishDish}
+            onExit={() => setGameState(GameState.MENU)}
+            />
+        </div>
       )}
 
       {gameState === GameState.RESULT && dishResult && (
