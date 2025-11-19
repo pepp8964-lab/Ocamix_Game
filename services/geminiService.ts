@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Ingredient, DishResult, Critic, IngredientType } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateCritics = async (level: number): Promise<Critic[]> => {
   const prompt = `
@@ -15,6 +15,7 @@ export const generateCritics = async (level: number): Promise<Critic[]> => {
   `;
 
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -96,6 +97,7 @@ export const evaluateDish = async (
   `;
 
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -163,6 +165,7 @@ export const evaluateDish = async (
     };
 
   } catch (e) {
+    console.error("Dish Evaluation Error:", e);
     return {
       name: "Кулінарний Провал",
       description: "Щось пішло не так під час оцінювання...",
@@ -191,6 +194,7 @@ export const replyToExcuse = async (criticName: string, persona: string, dishNam
     `;
     
     try {
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
@@ -211,6 +215,7 @@ export const analyzeCustomIngredient = async (name: string): Promise<{emoji: str
   `;
 
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -239,6 +244,7 @@ export const analyzeCustomIngredient = async (name: string): Promise<{emoji: str
 
 export const generateDishImage = async (dishName: string, description: string): Promise<string> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
       prompt: `Food photography, delicious RPG dish, close up, ${dishName}, ${description}. Dramatic lighting, steam, garnish, high detail, 8k render. If the description says burnt or rubbish, make it look funny and bad.`,
@@ -251,6 +257,7 @@ export const generateDishImage = async (dishName: string, description: string): 
 
 export const generateSpeech = async (text: string, voiceName: string) => {
    try {
+    const ai = getAI();
     const safeVoice = ['Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].includes(voiceName) ? voiceName : 'Puck';
     
     const response = await ai.models.generateContent({
